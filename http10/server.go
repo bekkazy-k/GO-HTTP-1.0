@@ -1,10 +1,10 @@
 package http10
 
 import (
-	"bufio"
 	"fmt"
 	"net"
 	"os"
+	"strings"
 )
 
 // Server описывает структуру сервера
@@ -35,6 +35,7 @@ func (srv *Server) Listen(connHost, connPort, connType string) {
 	// Закрывает Listener когда приложение закрывается
 	defer l.Close()
 	fmt.Println("Listening on " + connHost + ":" + connPort)
+	fmt.Println("----------------------------------------------------------------------")
 
 	for {
 		// Прослушивает входящие сообщения
@@ -57,13 +58,37 @@ func (srv *Server) Listen(connHost, connPort, connType string) {
 }
 
 func handleRequest(conn net.Conn) {
-	b := bufio.NewReader(conn)
-	for {
-		line, err := b.ReadBytes('\n')
-		if err != nil { // for example EOF
-			break
-		}
-		fmt.Print(string(line))
-		conn.Write(line)
+	buf := make([]byte, 1024)
+	reqLen, err := conn.Read(buf)
+	if err != nil {
+		fmt.Println("Error reading:", err.Error(), reqLen)
 	}
+	fmt.Println("***** ReqBody Start ***********************")
+	reqBody := string(buf)
+	fmt.Println(reqBody)
+	fmt.Println("***** ReqBody End ***********************")
+
+	fmt.Println("***** Split ReqBody Start ***********************")
+	a := strings.Split(reqBody, "\n")
+	fmt.Printf("%q\n", a)
+	fmt.Println("-----------------------------------------------------")
+	fmt.Println(a)
+	fmt.Println("***** Split ReqBody End ***********************")
+
+	for i, v := range a {
+		if v == "\n" {
+			fmt.Println(i, " = ", v, "is new line/\n")
+		} else if v == " " {
+			fmt.Println(i, " = ", v, "is space")
+		} else if v == "\r" {
+			fmt.Println(i, " = ", v, "is RRRRR")
+		} else {
+			fmt.Println(i, " = ", v)
+		}
+	}
+
+	fmt.Println("End of responce")
+
+	conn.Write([]byte("Responce typed here"))
+	conn.Close()
 }
