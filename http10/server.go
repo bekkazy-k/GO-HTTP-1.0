@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"net"
 	"os"
-	"strings"
 )
 
 // Server описывает структуру сервера
 type Server struct {
+	Addr   string
 	Port   string
 	Status string
 }
@@ -28,6 +28,7 @@ func (srv *Server) ChangePort(port string) {
 func (srv *Server) Listen(connHost, connPort, connType string) {
 	// Слушает входящие сообщения
 	l, err := net.Listen(connType, connHost+":"+connPort)
+
 	if err != nil {
 		fmt.Println("Error listening:", err.Error())
 		os.Exit(1)
@@ -58,37 +59,28 @@ func (srv *Server) Listen(connHost, connPort, connType string) {
 }
 
 func handleRequest(conn net.Conn) {
-	buf := make([]byte, 1024)
-	reqLen, err := conn.Read(buf)
-	if err != nil {
-		fmt.Println("Error reading:", err.Error(), reqLen)
+	message := make([]byte, 1024)
+
+	_, error := conn.Read(message)
+	if error != nil {
+		fmt.Println(error)
+		os.Exit(1)
 	}
-	fmt.Println("***** ReqBody Start ***********************")
-	reqBody := string(buf)
-	fmt.Println(reqBody)
-	fmt.Println("***** ReqBody End ***********************")
+	fmt.Println(string(message))
 
-	fmt.Println("***** Split ReqBody Start ***********************")
-	a := strings.Split(reqBody, "\n")
-	fmt.Printf("%q\n", a)
-	fmt.Println("-----------------------------------------------------")
-	fmt.Println(a)
-	fmt.Println("***** Split ReqBody End ***********************")
+	req := &Request{Header: make(Header)}
+	// req.Header = make(map[string]string)
 
-	for i, v := range a {
-		if v == "\n" {
-			fmt.Println(i, " = ", v, "is new line/\n")
-		} else if v == " " {
-			fmt.Println(i, " = ", v, "is space")
-		} else if v == "\r" {
-			fmt.Println(i, " = ", v, "is RRRRR")
-		} else {
-			fmt.Println(i, " = ", v)
-		}
-	}
+	req.ParseInnerData(string(message))
 
+	fmt.Println("Headers host =", req.Header.Get("Host"))
+	// req.make(header)
+
+	fmt.Println("**------------------------------------------------------------------------**")
 	fmt.Println("End of responce")
+	fmt.Println("**------------------------------------------------------------------------**")
 
 	conn.Write([]byte("Responce typed here"))
+
 	conn.Close()
 }
