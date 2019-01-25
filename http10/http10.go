@@ -1,11 +1,12 @@
 package http10
 
-import (
-	"fmt"
-)
+//написать интерфейс для GET
 
-func Start() {
-	fmt.Println("Package started!")
-	srv := CreateServer()
-	srv.Listen("localhost", "5000", "tcp")
+// Listen Создает новое соединение
+func Listen(port string) error {
+	if port == "" {
+		port = "80"
+	}
+	server := &Server{Addr: "localhost", Port: port}
+	return server.Listener()
 }

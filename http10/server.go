@@ -3,84 +3,71 @@ package http10
 import (
 	"fmt"
 	"net"
-	"os"
 )
 
-// Server описывает структуру сервера
 type Server struct {
-	Addr   string
-	Port   string
-	Status string
+	Addr string
+	Port string
 }
 
-// CreateServer функция создает новый экземпляр сервера
-func CreateServer() *Server {
-	return &Server{}
-}
+func (srv *Server) Listener() error {
 
-// ChangePort метод меняет порт экземпляра сервера
-func (srv *Server) ChangePort(port string) {
-	srv.Port = port
-}
-
-// Listen метод создает новое соединение
-// Принимает хост, порт и тип соединения
-func (srv *Server) Listen(connHost, connPort, connType string) {
-	// Слушает входящие сообщения
-	l, err := net.Listen(connType, connHost+":"+connPort)
+	addr := srv.Addr + ":" + srv.Port
+	ln, err := net.Listen("tcp", addr)
 
 	if err != nil {
-		fmt.Println("Error listening:", err.Error())
-		os.Exit(1)
+		fmt.Println("err =", err)
+		return err
 	}
-	// Закрывает Listener когда приложение закрывается
-	defer l.Close()
-	fmt.Println("Listening on " + connHost + ":" + connPort)
+	defer ln.Close()
+
+	fmt.Println("Listening on ", addr)
 	fmt.Println("----------------------------------------------------------------------")
 
 	for {
-		// Прослушивает входящие сообщения
-		conn, err := l.Accept()
-
-		// addr := l.Addr()
-		// netw := addr.Network()
-		// str := addr.String()
-
-		// fmt.Println("netw:", netw)
-		// fmt.Println("str:", str)
-
+		conn, err := ln.Accept()
 		if err != nil {
-			fmt.Println("Error accepting: ", err.Error())
-			os.Exit(1)
+			fmt.Println("err =", err)
+			return err
 		}
-		// Обрабатывает содинения в новом goroutine
+
 		go handleRequest(conn)
+
 	}
 }
 
 func handleRequest(conn net.Conn) {
-	message := make([]byte, 1024)
 
-	_, error := conn.Read(message)
-	if error != nil {
-		fmt.Println(error)
-		os.Exit(1)
-	}
-	fmt.Println(string(message))
+	// 1. Спарсить запрос и записать в Request
+	// 2. Запустить Middlewares, если они определены
+	// 3. Обработать запрос соответствующими методами (GET, POST, HEAD) если они определены
+	// 4. Сгенерировать Responce
+	// 5. Отправить ответ
 
-	req := &Request{Header: make(Header)}
-	// req.Header = make(map[string]string)
+	// 1. Парсим запрос и записываем в Request
+	request := &Request{Header: make(Header)}
+	request.init(conn)
 
-	req.ParseInnerData(string(message))
-
-	fmt.Println("Headers host =", req.Header.Get("Host"))
-	// req.make(header)
+	fmt.Println("Method=" + request.Method)
+	fmt.Println("URL=" + request.URL)
+	fmt.Println("HTTP_v=" + request.HTTP_v)
+	fmt.Println("User-Agent=" + request.Header.Get("User-Agent"))
 
 	fmt.Println("**------------------------------------------------------------------------**")
 	fmt.Println("End of responce")
 	fmt.Println("**------------------------------------------------------------------------**")
 
-	conn.Write([]byte("Responce typed here"))
+	var res string = "HTTP/1.0 200 OK \n" +
+		"Content-Type: text/plain; charset=utf-8\n" +
+		"X-Content-Type-Options: application/json\n" +
+		"Date: Thu, 24 Jan 2019 07:20:05 GMT\n" +
+		"Connection: keep-alive\n" +
+		"Content-Length: 32\n" +
+		"\n" +
+		"Hello, World! 1\n" +
+		"Hello, World! 2\n"
+
+	conn.Write([]byte(res))
 
 	conn.Close()
 }
