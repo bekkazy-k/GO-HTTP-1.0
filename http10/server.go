@@ -10,6 +10,7 @@ type Server struct {
 	Port string
 }
 
+// Listener created server and listen
 func (srv *Server) Listener() error {
 
 	addr := srv.Addr + ":" + srv.Port
@@ -47,6 +48,9 @@ func handleRequest(conn net.Conn) {
 	// 1. Парсим запрос и записываем в Request
 	request := &Request{Header: make(Header)}
 	request.init(conn)
+
+	// Started Hadlers Here!
+	M["/index"](request)
 
 	fmt.Println("Method=" + request.Method)
 	fmt.Println("URL=" + request.URL)

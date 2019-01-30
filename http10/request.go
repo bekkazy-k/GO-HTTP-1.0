@@ -25,8 +25,9 @@ func (req *Request) init(conn net.Conn) {
 	// 3. Записать тело запроса
 
 	// TODO: Need Use Buffion Readline!
-
+	// FIXME: Buffer size
 	message := make([]byte, 1024)
+
 	_, error := conn.Read(message)
 	if error != nil {
 		fmt.Println(error)

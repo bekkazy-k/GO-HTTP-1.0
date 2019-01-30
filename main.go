@@ -9,7 +9,15 @@ import (
 func main() {
 	fmt.Println("HTTP10 Started")
 
+	http10.Get("/index", handler)
+
 	http10.Listen("5000")
+}
+
+func handler(r *http10.Request) {
+
+	fmt.Println("Handler started HERE!", r.Method, r.URL)
+	fmt.Println("Handler header GET:", r.Header.Get("Content-Type"))
 }
 
 // package main
